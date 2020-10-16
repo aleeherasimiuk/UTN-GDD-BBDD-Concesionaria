@@ -45,9 +45,9 @@ GO
 CREATE TABLE compra(
 
 	nro_compra DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	fecha DATETIME2(3),
-	id_sucursal DECIMAL(18,0),
-	id_cliente DECIMAL(18,0),
+	fecha DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME(),
+	id_sucursal DECIMAL(18,0) NOT NULL,
+	id_cliente DECIMAL(18,0) NOT NULL,
 
 );
 GO
@@ -59,8 +59,8 @@ GO
 CREATE TABLE compra_auto(
 
 	nro_compra DECIMAL(18,0) PRIMARY KEY,
-	patente_auto NVARCHAR(50),
-	precio DECIMAL(18,2),
+	patente_auto NVARCHAR(50) NOT NULL,
+	precio DECIMAL(18,2) NOT NULL,
 );
 GO
 
@@ -68,9 +68,9 @@ CREATE TABLE compra_item(
 
 	nro_compra DECIMAL(18,0),
 	nro_item DECIMAL(18,0),
-	codigo_autoparte DECIMAL(18,0),
-	cantidad DECIMAL(18,0),
-	precio DECIMAL(18,2),
+	codigo_autoparte DECIMAL(18,0) NOT NULL,
+	cantidad DECIMAL(18,0) NOT NULL DEFAULT 1,
+	precio DECIMAL(18,2) NOT NULL,
 	PRIMARY KEY(nro_compra, nro_item)
 
 );
@@ -79,7 +79,7 @@ GO
 CREATE TABLE fabricante(
 
 	id_fabricante DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	nombre NVARCHAR(255),
+	nombre NVARCHAR(255) NOT NULL,
 
 );
 GO
@@ -87,62 +87,62 @@ GO
 CREATE TABLE factura(
 
 	nro_factura DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	fecha DATETIME2(3),
-	id_cliente DECIMAL(18,0),
-	id_sucursal DECIMAL(18,0),
+	fecha DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME(),
+	id_cliente DECIMAL(18,0) NOT NULL,
+	id_sucursal DECIMAL(18,0) NOT NULL,
 
 );
 GO
 
 CREATE TABLE factura_auto(
 	nro_factura DECIMAL(18,0) PRIMARY KEY,
-	patente_auto NVARCHAR(50),
-	precio_facturado DECIMAL(18,2),
+	patente_auto NVARCHAR(50) NOT NULL,
+	precio_facturado DECIMAL(18,2) NOT NULL,
 );
 GO
 
 CREATE TABLE factura_item(
 	nro_factura DECIMAL(18,0),
 	nro_item DECIMAL(18,0),
-	codigo_autoparte DECIMAL(18,0),
-	cant DECIMAL(18,0),
-	precio DECIMAL(18,2), -- Precio total
+	codigo_autoparte DECIMAL(18,0) NOT NULL,
+	cant DECIMAL(18,0) NOT NULL DEFAULT 1,
+	precio DECIMAL(18,2) NOT NULL, -- Precio total
 	PRIMARY KEY(nro_factura, nro_item)
 );
 GO
 
 CREATE TABLE modelo(
 	modelo_codigo DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	nombre NVARCHAR(255),
-	potencia DECIMAL(18,0)
+	nombre NVARCHAR(255) NOT NULL,
+	potencia DECIMAL(18,0) NOT NULL
 );
 GO
 
 CREATE TABLE sucursal(
 
 	id_sucursal DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	direccion NVARCHAR(255),
-	mail NVARCHAR(255),
-	telefono DECIMAL(18,0),
-	ciudad NVARCHAR(255)
+	direccion NVARCHAR(255) NOT NULL,
+	mail NVARCHAR(255) NOT NULL,
+	telefono DECIMAL(18,0) NOT NULL,
+	ciudad NVARCHAR(255) NOT NULL
 );
 GO
 
 CREATE TABLE tipo_auto(
 	tipo_auto_codigo DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	descripcion NVARCHAR(255),
+	descripcion NVARCHAR(255) NOT NULL,
 );
 GO
 
 CREATE TABLE tipo_caja(
 	tipo_caja_codigo DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	descripcion NVARCHAR(255),
+	descripcion NVARCHAR(255) NOT NULL,
 );
 GO
 
 CREATE TABLE tipo_transmision(
 	tipo_transmision_codigo DECIMAL(18,0) PRIMARY KEY IDENTITY(1,1),
-	descripcion NVARCHAR(255),
+	descripcion NVARCHAR(255) NOT NULL,
 );
 GO
 
