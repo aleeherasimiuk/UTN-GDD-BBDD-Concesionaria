@@ -358,9 +358,15 @@ CREATE PROCEDURE migrar_compra AS
 BEGIN
 
 	SET IDENTITY_INSERT compra ON
-	INSERT INTO compra (nro_compra, fecha, id_sucursal, id_cliente)
-		SELECT DISTINCT compra_nro, compra_fecha, EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(sucursal_direccion), EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(cliente_dni, cliente_apellido) FROM gd_esquema.Maestra WHERE compra_nro IS NOT NULL
 
+	SELECT DISTINCT compra_nro, compra_fecha, sucursal_direccion, cliente_dni, cliente_apellido INTO #temp_compras 
+		FROM gd_esquema.Maestra WHERE compra_nro IS NOT NULL
+
+	INSERT INTO compra (nro_compra, fecha, id_sucursal, id_cliente)
+		SELECT compra_nro, compra_fecha, EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(sucursal_direccion), EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(cliente_dni, cliente_apellido) 
+			FROM #temp_compras
+
+	DROP TABLE #temp_compras
 	SET IDENTITY_INSERT compra OFF
 END
 GO
@@ -424,8 +430,16 @@ CREATE PROCEDURE migrar_factura AS
 BEGIN
 
 	SET IDENTITY_INSERT factura ON
+
+	SELECT DISTINCT factura_nro, factura_fecha, fac_sucursal_direccion, fac_cliente_dni, fac_cliente_apellido INTO #temp_factura
+		FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL
+
+
 	INSERT INTO factura (nro_factura, fecha, id_sucursal, id_cliente)
-		SELECT DISTINCT factura_nro, factura_fecha, EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(fac_sucursal_direccion), EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(fac_cliente_dni, fac_cliente_apellido) FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL
+		SELECT DISTINCT factura_nro, factura_fecha, EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(fac_sucursal_direccion), EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(fac_cliente_dni, fac_cliente_apellido) 
+			FROM #temp_factura
+
+	DROP TABLE #temp_factura
 	SET IDENTITY_INSERT factura OFF
 
 END
