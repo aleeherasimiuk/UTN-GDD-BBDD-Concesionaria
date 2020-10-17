@@ -209,6 +209,7 @@ ALTER TABLE factura_item
 		FOREIGN KEY (codigo_autoparte) REFERENCES autoparte(codigo_autoparte);
 GO
 
+
 PRINT 'CREATING PROCEDURE FOR MIGRATING MODELO' 
 GO
 CREATE PROCEDURE migrar_modelo AS
@@ -435,10 +436,10 @@ PRINT 'CREATING PROCEDURE FOR MIGRATING FACTURA_AUTO'
 GO
 CREATE PROCEDURE migrar_factura_auto AS
 BEGIN
-	SET IDENTITY_INSERT factura_auto ON
+	
 	INSERT INTO factura_auto (nro_factura, patente_auto, precio_facturado)
 			SELECT DISTINCT factura_nro, auto_patente, precio_facturado FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL AND auto_patente IS NOT NULL;
-	SET IDENTITY_INSERT factura_auto OFF
+	
 END
 GO
 
@@ -590,3 +591,6 @@ SET @init = CAST(GETDATE() AS TIME);
 EXEC migrar_factura_item;
 SET @end = CAST(GETDATE() AS TIME);
 EXEC insert_log 'factura_item', @init, @end
+
+
+SELECT * FROM logs
