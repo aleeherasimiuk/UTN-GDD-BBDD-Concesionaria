@@ -436,7 +436,7 @@ BEGIN
 
 
 	INSERT INTO factura (nro_factura, fecha, id_sucursal, id_cliente)
-		SELECT DISTINCT factura_nro, factura_fecha, EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(fac_sucursal_direccion), EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(fac_cliente_dni, fac_cliente_apellido) 
+		SELECT factura_nro, factura_fecha, EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(fac_sucursal_direccion), EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(fac_cliente_dni, fac_cliente_apellido) 
 			FROM #temp_factura
 
 	DROP TABLE #temp_factura
