@@ -10,10 +10,19 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.sucursal.ix_sucursal','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.cliente.ix_cliente','U') IS NOT NULL
   DROP INDEX EMPANADA_DE_MONDONGO.cliente.ix_cliente;
 
+
+-- TRIGGERS
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM') IS NOT NULL
+  DROP TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_FACTURA_ITEM') IS NOT NULL
+  DROP TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_FACTURA_ITEM;
+
 -- TABLAS
 
 -- DESACTIVAR CONSTRAINTS DE FK
--- EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"
+EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.factura_item','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.factura_item;
@@ -33,8 +42,8 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.compra_auto','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.compra','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.compra;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.auto_parte','U') IS NOT NULL
-  DROP TABLE EMPANADA_DE_MONDONGO.auto_parte;
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.autoparte','U') IS NOT NULL
+  DROP TABLE EMPANADA_DE_MONDONGO.autoparte;
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.auto','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.auto;
@@ -62,63 +71,68 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.fabricante','U') IS NOT NULL
 
 -- FUNCIONES
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_FABRICANTE','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_FABRICANTE') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_FABRICANTE;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM') IS NOT NULL
+  DROP FUNCTION EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM;
 
 -- STORED PROCEDURES
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_auto','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_auto') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_auto;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_auto_parte','U') IS NOT NULL
-  DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_auto_parte;
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_autoparte') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_autoparte;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_cliente','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_cliente') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_cliente;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_compra','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_compra') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_compra;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_compra_auto','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_compra_auto') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_compra_auto;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_compra_item','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_compra_item') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_compra_item;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_fabricante','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_fabricante') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_fabricante;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_factura','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_factura') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_factura_auto','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_factura_auto') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_auto;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_factura_item','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_factura_item') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_item;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_modelo','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_modelo') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_modelo;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_sucursal','U') IS NOT NULL
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_sucursal') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_sucursal;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.tipo_auto','U') IS NOT NULL
-  DROP PROCEDURE EMPANADA_DE_MONDONGO.tipo_auto;
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_auto') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_tipo_auto;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.tipo_caja','U') IS NOT NULL
-  DROP PROCEDURE EMPANADA_DE_MONDONGO.tipo_caja;
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_caja') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_tipo_caja;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.tipo_transmision','U') IS NOT NULL
-  DROP PROCEDURE EMPANADA_DE_MONDONGO.tipo_transmision;
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_transmision') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_tipo_transmision;
+
 
 GO
+
 
 -- SCHEMA
 
@@ -278,9 +292,9 @@ GO
 
 ALTER TABLE EMPANADA_DE_MONDONGO.auto 
 	ADD FOREIGN KEY (tipo_auto_codigo) REFERENCES EMPANADA_DE_MONDONGO.tipo_auto(tipo_auto_codigo),
-		FOREIGN KEY (tipo_transmision_codigo) REFERENCES EMPANADA_DE_MONDONGO.EMPANADA_DE_MONDONGO.tipo_transmision(tipo_transmision_codigo),
-		FOREIGN KEY (tipo_caja_codigo) REFERENCES EMPANADA_DE_MONDONGO.EMPANADA_DE_MONDONGO.tipo_caja(tipo_caja_codigo),
-		FOREIGN KEY (modelo_codigo) REFERENCES EMPANADA_DE_MONDONGO.EMPANADA_DE_MONDONGO.modelo(modelo_codigo),
+		FOREIGN KEY (tipo_transmision_codigo) REFERENCES EMPANADA_DE_MONDONGO.tipo_transmision(tipo_transmision_codigo),
+		FOREIGN KEY (tipo_caja_codigo) REFERENCES EMPANADA_DE_MONDONGO.tipo_caja(tipo_caja_codigo),
+		FOREIGN KEY (modelo_codigo) REFERENCES EMPANADA_DE_MONDONGO.modelo(modelo_codigo),
 		FOREIGN KEY (id_fabricante) REFERENCES EMPANADA_DE_MONDONGO.fabricante(id_fabricante);
 GO
 
@@ -482,45 +496,57 @@ BEGIN
 END
 GO
 
-
-CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_compra_item AS
+-- DROP FUNCTION EMPANADA_DE_MONDONGO.item_num
+CREATE FUNCTION EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM(@nro DECIMAL(18,0), @tipo CHAR) RETURNS DECIMAL(18,0) AS
 BEGIN
 
+	DECLARE @item_num DECIMAL(18,0)
+
+	IF @tipo = 'C'
+		SELECT @item_num = (COALESCE(MAX(nro_item), 0) + 1) FROM EMPANADA_DE_MONDONGO.compra_item WHERE nro_compra = @nro;
+	ELSE IF @tipo = 'F'
+		SELECT @item_num = (COALESCE(MAX(nro_item), 0) + 1) FROM EMPANADA_DE_MONDONGO.factura_item WHERE nro_factura = @nro;
+
+	RETURN @item_num
+
+END
+GO
+
+--DROP TRIGGER EMPANADA_DE_MONDONGO.insertando_compra_item
+CREATE TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM ON EMPANADA_DE_MONDONGO.compra_item INSTEAD OF INSERT AS
+BEGIN
+	
 	DECLARE @nro_compra DECIMAL(18,0);
 	DECLARE @codigo_autoparte DECIMAL(18,0);
-	DECLARE @compra_cant DECIMAL(18,0);
-	DECLARE @compra_precio DECIMAL(18,0);
-
-	DECLARE @compra_actual DECIMAL(18,0);
-	SET @compra_actual = NULL
-
-	DECLARE @nro_item DECIMAL(18,0);
-	SET @nro_item = 0;
+	DECLARE @cantidad DECIMAL(18,0);
+	DECLARE @precio DECIMAL(18,0);
 
 	DECLARE items CURSOR LOCAL FORWARD_ONLY READ_ONLY
-		FOR SELECT compra_nro, auto_parte_codigo, compra_cant, compra_precio FROM gd_esquema.Maestra WHERE compra_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL ORDER BY compra_nro;
+		FOR SELECT nro_compra, codigo_autoparte, cantidad, precio FROM inserted;
 
 	OPEN items 
 
-	FETCH items INTO @nro_compra, @codigo_autoparte, @compra_cant, @compra_precio
+	FETCH items INTO @nro_compra, @codigo_autoparte, @cantidad, @precio
 
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
 
-		IF (@nro_compra != @compra_actual)
-			SET @nro_item = 0
-			SET @compra_actual = @nro_compra
-
-		SET @nro_item += 1;
-
 		INSERT INTO EMPANADA_DE_MONDONGO.compra_item (nro_compra, nro_item, codigo_autoparte, cantidad, precio)
-			VALUES (@nro_compra, @nro_item, @codigo_autoparte, @compra_cant, @compra_precio)
+			VALUES (@nro_compra, EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM(@nro_compra, 'C'), @codigo_autoparte, @cantidad, @precio)
 
-		FETCH items INTO @nro_compra, @codigo_autoparte, @compra_cant, @compra_precio
+		FETCH items INTO @nro_compra, @codigo_autoparte, @cantidad, @precio
 	END
 	CLOSE items
 	DEALLOCATE items
-		
+
+END
+GO
+
+
+CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_compra_item AS
+BEGIN
+	INSERT INTO EMPANADA_DE_MONDONGO.compra_item (nro_compra, codigo_autoparte, cantidad, precio)
+			SELECT compra_nro, auto_parte_codigo, compra_cant, compra_precio FROM gd_esquema.Maestra c2 WHERE compra_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL;	
 END
 GO
 
@@ -556,51 +582,49 @@ END
 GO
 
 
-CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_item AS
+CREATE TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_FACTURA_ITEM ON EMPANADA_DE_MONDONGO.factura_item INSTEAD OF INSERT AS
 BEGIN
+
 
 	DECLARE @nro_factura DECIMAL(18,0);
 	DECLARE @codigo_autoparte DECIMAL(18,0);
-	DECLARE @cant DECIMAL(18,0);
+	DECLARE @cantidad DECIMAL(18,0);
 	DECLARE @precio DECIMAL(18,0);
 
-	DECLARE @factura_actual DECIMAL(18,0);
-	SET @factura_actual = NULL
-
-	DECLARE @nro_item DECIMAL(18,0);
-	SET @nro_item = 0;
-
 	DECLARE items CURSOR LOCAL FORWARD_ONLY READ_ONLY
-		FOR SELECT factura_nro, auto_parte_codigo, cant_facturada, precio_facturado FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL ORDER BY factura_nro;
+		FOR SELECT nro_factura, codigo_autoparte, cant, precio FROM inserted;
 
 	OPEN items 
 
-	FETCH items INTO @nro_factura, @codigo_autoparte, @cant, @precio
+	FETCH items INTO @nro_factura, @codigo_autoparte, @cantidad, @precio
 
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
 
-		IF (@nro_factura != @factura_actual)
-			SET @nro_item = 0
-			SET @factura_actual = @nro_factura
-
-		SET @nro_item += 1;
-
 		INSERT INTO EMPANADA_DE_MONDONGO.factura_item(nro_factura, nro_item, codigo_autoparte, cant, precio)
-			VALUES (@nro_factura, @nro_item, @codigo_autoparte, @cant, @precio)
+			VALUES (@nro_factura, EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM(@nro_factura, 'F'), @codigo_autoparte, @cantidad, @precio)
 
-		FETCH items INTO @nro_factura, @codigo_autoparte, @cant, @precio
+		FETCH items INTO @nro_factura, @codigo_autoparte, @cantidad, @precio
 	END
 	CLOSE items
 	DEALLOCATE items
+
+END
+GO
+
+CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_item AS
+BEGIN
+
+	INSERT INTO EMPANADA_DE_MONDONGO.factura_item(nro_factura, codigo_autoparte, cant, precio)
+			SELECT factura_nro, auto_parte_codigo, cant_facturada, precio_facturado FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL
 		
 END
 GO
 
 -- INDICES
 
-CREATE INDEX ix_sucursal ON EMPANADA_DE_MONDONGO.sucursal (sucursal_direccion);
-CREATE INDEX ix_cliente ON EMPANADA_DE_MONDONGO.cliente (cliente_dni, cliente_apellido);
+CREATE INDEX ix_sucursal ON EMPANADA_DE_MONDONGO.sucursal (direccion);
+CREATE INDEX ix_cliente ON EMPANADA_DE_MONDONGO.cliente (dni, apellido);
 GO
 
 -- EJECUCION DE SPs
