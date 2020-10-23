@@ -12,6 +12,9 @@ BEGIN
 END
 GO
 
+DROP INDEX EMPANADA_DE_MONDONGO.sucursal.ix1_sucursal
+DROP INDEX EMPANADA_DE_MONDONGO.cliente.ix1_cliente
+
 IF dbo.table_exists('compra_auto') = 1
 	DROP TABLE EMPANADA_DE_MONDONGO.compra_auto 
 

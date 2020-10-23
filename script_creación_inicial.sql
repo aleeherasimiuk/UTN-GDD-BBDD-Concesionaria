@@ -509,9 +509,12 @@ GO
 
 CREATE PROCEDURE insert_log @table_name VARCHAR(15), @init TIME, @end TIME AS
 BEGIN
-	INSERT into logs (table_name, duration) SELECT @table_name, DATEDIFF(minute, @init, @end);
+	INSERT into logs (table_name, duration) SELECT @table_name, DATEDIFF(SECOND, @init, @end);
 END
 GO
+
+CREATE INDEX ix1_sucursal ON sucursal(direccion)
+CREATE INDEX ix1_cliente ON cliente(dni, apellido)
 
 DECLARE @init TIME;
 DECLARE @end TIME;
@@ -608,3 +611,4 @@ EXEC insert_log 'factura_item', @init, @end
 
 
 SELECT * FROM logs
+
