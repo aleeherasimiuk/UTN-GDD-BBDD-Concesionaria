@@ -1,9 +1,16 @@
 USE [GD2C2020]
 GO
 
--- LIMPIAR OBJETOS SI EXISTEN
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 1--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
--- INDICES
+-- En esta sección se borrarán los objetos previamente creados
+-- Esto es debido a que durante el desarrollo puede ser que se ejecute este script repetidas veces
+-- Sin borrar los objetos antiguos SQL Server no permitirá la ejecución y por tal motivo se realiza esta primera sección
+-- Esta sección no incide de manera relevante en la performance de la ejecución.
+
+-- Borrado de Índices
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.sucursal.ix_sucursal','U') IS NOT NULL
   DROP INDEX EMPANADA_DE_MONDONGO.sucursal.ix_sucursal;
 
@@ -16,7 +23,7 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.compra_item.ix_compra_item','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.factura_item.ix_factura_item','U') IS NOT NULL
   DROP INDEX EMPANADA_DE_MONDONGO.factura_item.ix_factura_item;
 
--- TRIGGERS
+-- -- Borrado de Triggers
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM') IS NOT NULL
   DROP TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM;
@@ -24,9 +31,7 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_FACTURA_ITEM') IS NOT NULL
   DROP TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_FACTURA_ITEM;
 
--- TABLAS
-
---VERIFICAMOS QUE LAS TABLAS EXISTAN, Y SI EXISTEN SE ELIMINAN
+-- Borrado de tablas
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.factura_item','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.factura_item;
@@ -73,7 +78,7 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.cliente','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.fabricante','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.fabricante;
 
--- FUNCIONES
+-- Borrado de Funciones
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE;
@@ -90,9 +95,7 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE;
 
--- STORED PROCEDURES
-
---SI EXISTEN LOS SP, SE ELIMINAN
+-- Borrado de Stored Procedures
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_auto') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_auto;
@@ -139,7 +142,8 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_caja') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_transmision') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_tipo_transmision;
 
--- VISTAS
+-- Borrado de vistas
+
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_compra_auto') IS NOT NULL
   DROP VIEW EMPANADA_DE_MONDONGO.view_compra_auto;
 
@@ -167,15 +171,19 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_autopartes_en_stock') IS NOT NULL
 GO
 
 
-
-
--- SCHEMA
-
---SI EXISTE EL ESQUEMA, SE ELIMINA
+-- Borrado del Schema
 
 IF EXISTS (SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'EMPANADA_DE_MONDONGO')
   DROP SCHEMA EMPANADA_DE_MONDONGO
 GO
+
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 2--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+
+-- Esta sección consiste en la creeación del Esquema, Tablas y sus respectivos Constraints
+-- Dado que es posible que eventualmente se quieran crear tablas que referencian tablas que aún no fueron creadas
+-- Las Foreign Keys son declaradas posteriormente mediante Alter Tables.
 
 
 -- CREACION DEL ESQUEMA
@@ -326,7 +334,11 @@ CREATE TABLE EMPANADA_DE_MONDONGO.tipo_transmision(
 );
 GO
 
--- FKs
+--------------------------------------------------------
+---------------------Sección 2.1 -----------------------
+--------------------------------------------------------
+
+-- En esta subsección se declaran las Foreign Keys que faltó declarar en la subsección anterior
 
 ALTER TABLE EMPANADA_DE_MONDONGO.auto 
 	ADD FOREIGN KEY (tipo_auto_codigo) REFERENCES EMPANADA_DE_MONDONGO.tipo_auto(tipo_auto_codigo),
@@ -371,10 +383,14 @@ ALTER TABLE EMPANADA_DE_MONDONGO.factura_item
 		FOREIGN KEY (codigo_autoparte) REFERENCES EMPANADA_DE_MONDONGO.autoparte(codigo_autoparte);
 GO
 
--- FUNCIONES
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 3--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
---CONSEGUIR EL ID FABRICANTE AUTOGENERADO, EN BASE A SU NOMBRE EN LA TABLA MAESTRA
+-- En esta sección se declaran las funciones necesarias para la migración.
 
+
+-- OBTENER_ID_FABRICANTE --> Retorna el ID de un fabricante dado un nombre.
 CREATE FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_FABRICANTE(@nombre NVARCHAR(255)) RETURNS DECIMAL(18,0) AS
 BEGIN
 
@@ -386,8 +402,8 @@ BEGIN
 END
 GO
 
---CONSEGUIR EL ID CLIENTE AUTOGENERADO, DEPENDIENDO DEL DNI Y EL APELLIDO
 
+-- OBTENER_ID_CLIENTE --> Retorna el ID de un cliente dado su DNI y su Apellido
 CREATE FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_CLIENTE(@DNI DECIMAL(18,0), @apellido NVARCHAR(255)) RETURNS DECIMAL (18,0) AS
 BEGIN
 
@@ -401,8 +417,7 @@ BEGIN
 END
 GO
 
---OBTENER ID AUTOGENERADO DE LA SUCURSAL, EN BASE A LA DIRECCION DE LA SUCURSAL
-
+-- OBTENER_ID_SUCURSAL --> Retorna el ID de una sucursal dada su dirección
 CREATE FUNCTION EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL(@direccion NVARCHAR(255)) RETURNS DECIMAL (18,0) AS
 BEGIN
 
@@ -416,7 +431,14 @@ BEGIN
 END
 GO
 
--- STORED PROCEDURES DE MIGRACION
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 4--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+
+-- En esta sección se declaran las Stored Procedures para luego poder realizar la migración
+-- Una Stored Procedure por cada tabla.
+-- El nombre de la Stored Procedure especifica qué tabla se está migrando
+-- Toda tabla cuya Primary Key es Identity, debe tener en su migración la sentencia que permite inserción de identities.
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_modelo AS
 BEGIN
@@ -520,6 +542,8 @@ BEGIN
 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.compra ON
 
+	-- El uso de tablas temporales, reduce la cantidad de Ordenamientos que realiza el motor de base de datos, incrementando notablemente la performance
+
 	SELECT DISTINCT compra_nro, compra_fecha, sucursal_direccion, cliente_dni, cliente_apellido INTO #temp_compras 
 		FROM gd_esquema.Maestra WHERE compra_nro IS NOT NULL
 
@@ -541,8 +565,8 @@ BEGIN
 END
 GO
 
---OBTENER EL SIGUIENTE NUMERO QUE LE CORRESPONDERIA AL ITEM ASOCIADO A UN NUMERO DE COMPRA O A UN NUMERO DE FACTURA SEGUN CORRESPONDA
-
+-- OBTENER_NUMERO_ITEM --> Retorna el número de item con el cual debe ser ingresado un ítem en la tabla de factura_item o compra_item
+-- Recibe el número de factura o compra y el tipo de inserción (F -> Factura, C -> Compra)
 CREATE FUNCTION EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM(@nro DECIMAL(18,0), @tipo CHAR) RETURNS DECIMAL(18,0) AS
 BEGIN
 
@@ -558,7 +582,10 @@ BEGIN
 END
 GO
 
---TRIGGER PARA INSERTAR LOS DATOS EN COMPRA ITEM
+-- INSERTANDO_COMPRA_ITEM --> Inserta el item de una compra, encargándose de insertarlo con el número de ítem que corresponde.
+-- Para ello utiliza un cursor en el que obtiene todos los items ingresados y por cada uno obtiene su respectivo número de item
+-- E inserta cada uno de esa manera.
+-- Ésto tiene mayor performance que hacer una lógica de ir incrementando en la SP y además permite futuros inserts.
 
 CREATE TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM ON EMPANADA_DE_MONDONGO.compra_item INSTEAD OF INSERT AS
 BEGIN
@@ -603,6 +630,8 @@ BEGIN
 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.factura ON
 
+	-- El uso de tablas temporales, reduce la cantidad de Ordenamientos que realiza el motor de base de datos, incrementando notablemente la performance
+
 	SELECT DISTINCT factura_nro, factura_fecha, fac_sucursal_direccion, fac_cliente_dni, fac_cliente_apellido INTO #temp_factura
 		FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL
 
@@ -618,7 +647,6 @@ END
 GO
 
 
-
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_auto AS
 BEGIN
 	
@@ -628,7 +656,10 @@ BEGIN
 END
 GO
 
---TRIGGER PARA INSERTAR LOS DATOS EN FACTURA ITEM
+-- INSERTANDO_FACTURA_ITEM --> Inserta el item de una factura, encargándose de insertarlo con el número de ítem que corresponde.
+-- Para ello utiliza un cursor en el que obtiene todos los items ingresados y por cada uno obtiene su respectivo número de item
+-- E inserta cada uno de esa manera.
+-- Ésto tiene mayor performance que hacer una lógica de ir incrementando en la SP y además permite futuros inserts.
 
 CREATE TRIGGER EMPANADA_DE_MONDONGO.INSERTANDO_FACTURA_ITEM ON EMPANADA_DE_MONDONGO.factura_item INSTEAD OF INSERT AS
 BEGIN
@@ -669,15 +700,24 @@ BEGIN
 END
 GO
 
--- INDICES
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 5--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
-CREATE INDEX ix_sucursal ON EMPANADA_DE_MONDONGO.sucursal (direccion);
-CREATE INDEX ix_cliente ON EMPANADA_DE_MONDONGO.cliente (dni, apellido);
-CREATE INDEX ix_compra_item ON EMPANADA_DE_MONDONGO.compra_item(codigo_autoparte)
-CREATE INDEX ix_factura_item ON EMPANADA_DE_MONDONGO.factura_item(codigo_autoparte)
+-- En ésta sección se crean los índices necesarios para mejorar la performance de la migración
+
+
+CREATE INDEX ix_sucursal ON EMPANADA_DE_MONDONGO.sucursal (direccion);				-- Índice sobre una sucursal.		Permite buscar más rápido el ID de una sucursal por su dirección
+CREATE INDEX ix_cliente ON EMPANADA_DE_MONDONGO.cliente (dni, apellido);			-- Índice sobre un cliente.			Permite buscar más rápido el ID de un cliente por su DNI y Apellido
+CREATE INDEX ix_compra_item ON EMPANADA_DE_MONDONGO.compra_item(codigo_autoparte)	-- Índice sobre una compra item.	Permite buscar más rápido los ítems de una autoparte para el cálculo de stock
+CREATE INDEX ix_factura_item ON EMPANADA_DE_MONDONGO.factura_item(codigo_autoparte)	-- Índice sobre una factura item.	Permite buscar más rápido los ítems de una autoparte para el cálculo de stock
 GO
 
--- EJECUCION DE SPs
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 6--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+
+-- En ésta sección se ejecutan todas las stored procedures para migración.
 
 EXEC EMPANADA_DE_MONDONGO.migrar_fabricante;
 EXEC EMPANADA_DE_MONDONGO.migrar_cliente;
@@ -696,10 +736,13 @@ EXEC EMPANADA_DE_MONDONGO.migrar_factura_auto;
 EXEC EMPANADA_DE_MONDONGO.migrar_factura_item;
 GO
 
--- VISTAS
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------Sección 7--------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
--- COMPRA AUTO
+-- En esta sección se declaran las vistas que se han considerado necesarias para obtener información rápida.
 
+-- VIEW COMPRA AUTO --> Retorna todos los datos de un auto que fue comprado, con los datos de la compra.
 CREATE VIEW EMPANADA_DE_MONDONGO.view_compra_auto AS 
 	SELECT c.nro_compra, ca.patente_auto, m.nombre as modelo, ca.precio, c.fecha, s.direccion as sucursal, cl.apellido + ', ' + cl.nombre as cliente, cl.dni, cl.mail
 	FROM EMPANADA_DE_MONDONGO.compra c
@@ -710,7 +753,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_compra_auto AS
 	JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = c.id_sucursal
 GO
 
--- COMPRA ITEM
+-- VIEW COMPRA ITEM --> Retorna todos los datos de un autoparte que fue comprado, con los datos de la compra.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_compra_items AS 
 	SELECT c.nro_compra, ci.nro_item, ap.descripcion as autoparte, m.nombre as modelo, ci.cantidad, ci.precio as total, c.fecha, s.direccion as sucursal, cl.apellido + ', ' + cl.nombre as cliente, cl.dni, cl.mail
@@ -722,7 +765,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_compra_items AS
 	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
 GO
 
--- FACTURA AUTO
+-- VIEW FACTURA AUTO --> Retorna todos los datos de un auto que fue vendido, con los datos de la venta.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_factura_auto AS 
 	SELECT f.nro_factura, fa.patente_auto, m.nombre as modelo, fa.precio, f.fecha, s.direccion as sucursal, cl.apellido + ', ' + cl.nombre as cliente, cl.dni, cl.mail
@@ -734,7 +777,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_factura_auto AS
 	JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = f.id_sucursal
 GO
 
--- FACTURA ITEM
+-- VIEW FACTURA ITEM --> Retorna todos los datos de un autoparte que fue vendido, con los datos de la venta.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_factura_items AS 
 	SELECT f.nro_factura, fi.nro_item, ap.descripcion as autoparte, m.nombre as modelo, fi.cantidad, fi.precio as total, f.fecha, s.direccion as sucursal, cl.apellido + ', ' +cl.nombre as cliente, cl.dni, cl.mail
@@ -746,7 +789,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_factura_items AS
 	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
 GO
 
--- AUTO
+-- VIEW AUTO --> Retorna todos los datos de un auto.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_auto AS 
 	SELECT f.nombre as fabricante, m.nombre as modelo, a.patente_auto, a.cant_kms, ta.descripcion as tipo_auto, a.fecha_alta, a.nro_chasis, a.nro_motor, tipo_motor_codigo as tipo_motor, m.potencia, tt.descripcion as tipo_transmision, tc.descripcion as tipo_caja
@@ -758,7 +801,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_auto AS
 	JOIN EMPANADA_DE_MONDONGO.fabricante f ON f.id_fabricante = a.id_fabricante
 GO
 
--- AUTOPARTE
+-- VIEW AUTO --> Retorna todos los datos de una autoparte.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_autoparte AS
 	SELECT ap.codigo_autoparte, ap.descripcion, ap.categoria, f.nombre as fabricante, m.nombre as modelo
@@ -767,7 +810,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_autoparte AS
 	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
 GO
 
--- AUTOS EN STOCK
+-- VIEW AUTOS EN STOCK --> Retorna todos los datos de los autos que fueron comprados pero que aún no fueron vendidos.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_autos_en_stock AS 
 	SELECT *
@@ -778,7 +821,7 @@ CREATE VIEW EMPANADA_DE_MONDONGO.view_autos_en_stock AS
 	)
 GO
 
--- FUNCION PARA CALCULAR EL STOCK DISPONIBLE SEGUN CODIGO AUTOPARTE
+-- STOCK_AUTOPARTE --> Función que retorna el stock de una autoparte específica. Restando la cantidad comprada y la vendida.
 
 CREATE FUNCTION EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE(@codigo_autoparte DECIMAL(18,0)) RETURNS DECIMAL(18,0) AS 
 BEGIN
@@ -793,9 +836,14 @@ BEGIN
 END
 GO
 
--- AUTOPARTES EN STOCK
+-- VIEW AUTOPARTES EN STOCK --> Retorna todos los datos de las autopartes que fueron compradas pero que aún no fueron vendidas.
 
 CREATE VIEW EMPANADA_DE_MONDONGO.view_autopartes_en_stock AS 
 	SELECT ap.*, EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE(ap.codigo_autoparte) as stock
 	FROM EMPANADA_DE_MONDONGO.view_autoparte ap
 GO
+
+-- Benchmarks:
+
+-- Primera ejecución ~35 segundos
+-- Segunda ejecución en adelante ~20 segundos.
