@@ -10,7 +10,6 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.sucursal.ix_sucursal','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.cliente.ix_cliente','U') IS NOT NULL
   DROP INDEX EMPANADA_DE_MONDONGO.cliente.ix_cliente;
 
-
 -- TRIGGERS
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM') IS NOT NULL
@@ -254,7 +253,7 @@ CREATE TABLE EMPANADA_DE_MONDONGO.factura_item(
 	nro_factura DECIMAL(18,0),
 	nro_item DECIMAL(18,0),
 	codigo_autoparte DECIMAL(18,0) NOT NULL,
-	cant DECIMAL(18,0) NOT NULL DEFAULT 1,
+	cantidad DECIMAL(18,0) NOT NULL DEFAULT 1,
 	precio DECIMAL(18,2) NOT NULL, -- Precio total
 	PRIMARY KEY(nro_factura, nro_item)
 );
@@ -392,6 +391,7 @@ BEGIN
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.modelo ON
 	INSERT INTO EMPANADA_DE_MONDONGO.modelo (modelo_codigo, nombre, potencia)
 		SELECT DISTINCT modelo_codigo, modelo_nombre, modelo_potencia FROM gd_esquema.Maestra
+		WHERE modelo_codigo IS NOT NULL
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.modelo OFF
 END
 GO
@@ -435,7 +435,7 @@ BEGIN
 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.tipo_auto ON
 	INSERT INTO EMPANADA_DE_MONDONGO.tipo_auto (tipo_auto_codigo, descripcion)
-		SELECT DISTINCT tipo_auto_codigo, tipo_auto_desc FROM gd_esquema.Maestra WHERE tipo_auto_codigo IS NOT NULL ORDER BY tipo_auto_codigo 
+		SELECT DISTINCT tipo_auto_codigo, tipo_auto_desc FROM gd_esquema.Maestra WHERE tipo_auto_codigo IS NOT NULL 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.tipo_auto OFF
 END
 GO
@@ -446,7 +446,7 @@ BEGIN
 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.tipo_transmision ON
 	INSERT INTO EMPANADA_DE_MONDONGO.tipo_transmision (tipo_transmision_codigo, descripcion)
-		SELECT DISTINCT tipo_transmision_codigo, tipo_transmision_desc FROM gd_esquema.Maestra WHERE tipo_transmision_codigo IS NOT NULL ORDER BY tipo_transmision_codigo 
+		SELECT DISTINCT tipo_transmision_codigo, tipo_transmision_desc FROM gd_esquema.Maestra WHERE tipo_transmision_codigo IS NOT NULL 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.tipo_transmision OFF
 END
 GO
@@ -457,7 +457,7 @@ BEGIN
 
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.tipo_caja ON
 	INSERT INTO EMPANADA_DE_MONDONGO.tipo_caja (tipo_caja_codigo, descripcion)
-		SELECT DISTINCT tipo_caja_codigo, tipo_caja_desc FROM gd_esquema.Maestra WHERE tipo_caja_codigo IS NOT NULL ORDER BY tipo_caja_codigo 
+		SELECT DISTINCT tipo_caja_codigo, tipo_caja_desc FROM gd_esquema.Maestra WHERE tipo_caja_codigo IS NOT NULL
 	SET IDENTITY_INSERT EMPANADA_DE_MONDONGO.tipo_caja OFF
 END
 GO
@@ -561,7 +561,7 @@ GO
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_compra_item AS
 BEGIN
 	INSERT INTO EMPANADA_DE_MONDONGO.compra_item (nro_compra, codigo_autoparte, cantidad, precio)
-			SELECT compra_nro, auto_parte_codigo, compra_cant, compra_precio FROM gd_esquema.Maestra c2 WHERE compra_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL;	
+			SELECT compra_nro, auto_parte_codigo, compra_cant, compra_precio FROM gd_esquema.Maestra WHERE compra_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL;	
 END
 GO
 
@@ -608,7 +608,7 @@ BEGIN
 	DECLARE @precio DECIMAL(18,0);
 
 	DECLARE items CURSOR LOCAL FORWARD_ONLY READ_ONLY
-		FOR SELECT nro_factura, codigo_autoparte, cant, precio FROM inserted;
+		FOR SELECT nro_factura, codigo_autoparte, cantidad, precio FROM inserted;
 
 	OPEN items 
 
@@ -617,7 +617,7 @@ BEGIN
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
 
-		INSERT INTO EMPANADA_DE_MONDONGO.factura_item(nro_factura, nro_item, codigo_autoparte, cant, precio)
+		INSERT INTO EMPANADA_DE_MONDONGO.factura_item(nro_factura, nro_item, codigo_autoparte, cantidad, precio)
 			VALUES (@nro_factura, EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM(@nro_factura, 'F'), @codigo_autoparte, @cantidad, @precio)
 
 		FETCH items INTO @nro_factura, @codigo_autoparte, @cantidad, @precio
@@ -631,7 +631,7 @@ GO
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_item AS
 BEGIN
 
-	INSERT INTO EMPANADA_DE_MONDONGO.factura_item(nro_factura, codigo_autoparte, cant, precio)
+	INSERT INTO EMPANADA_DE_MONDONGO.factura_item(nro_factura, codigo_autoparte, cantidad, precio)
 			SELECT factura_nro, auto_parte_codigo, cant_facturada, precio_facturado FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL AND auto_parte_codigo IS NOT NULL
 		
 END
