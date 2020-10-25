@@ -462,11 +462,13 @@ GO
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_cliente AS
 BEGIN
+
 	INSERT INTO EMPANADA_DE_MONDONGO.cliente (dni, apellido, nombre, direccion, fecha_nac, mail)
 		SELECT DISTINCT	cliente_dni, cliente_apellido, cliente_nombre, cliente_direccion, cliente_fecha_nac, cliente_mail FROM gd_esquema.Maestra WHERE cliente_dni IS NOT NULL
 		UNION
 		SELECT DISTINCT	fac_cliente_dni, fac_cliente_apellido, fac_cliente_nombre, fac_cliente_direccion, fac_cliente_fecha_nac, fac_cliente_mail FROM gd_esquema.Maestra WHERE fac_cliente_dni IS NOT NULL
-		
+	
+	-- También se podría usar Merge, pero el código es más complejo y la performance es igual.
 END
 GO
 
