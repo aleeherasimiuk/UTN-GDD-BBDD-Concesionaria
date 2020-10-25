@@ -10,6 +10,12 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.sucursal.ix_sucursal','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.cliente.ix_cliente','U') IS NOT NULL
   DROP INDEX EMPANADA_DE_MONDONGO.cliente.ix_cliente;
 
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.compra_item.ix_compra_item','U') IS NOT NULL
+  DROP INDEX EMPANADA_DE_MONDONGO.compra_item.ix_compra_item;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.factura_item.ix_factura_item','U') IS NOT NULL
+  DROP INDEX EMPANADA_DE_MONDONGO.factura_item.ix_factura_item;
+
 -- TRIGGERS
 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.INSERTANDO_COMPRA_ITEM') IS NOT NULL
@@ -84,6 +90,9 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_ID_SUCURSAL') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.OBTENER_NUMERO_ITEM;
 
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE') IS NOT NULL
+  DROP FUNCTION EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE;
+
 -- STORED PROCEDURES
 
 --SI EXISTEN LOS SP, SE ELIMINAN
@@ -133,8 +142,34 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_caja') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.migrar_tipo_transmision') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.migrar_tipo_transmision;
 
+-- VISTAS
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_compra_auto') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_compra_auto;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_compra_items') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_compra_items;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_factura_auto') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_factura_auto;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_factura_items') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_factura_items;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_auto') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_auto;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_autoparte') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_autoparte;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_autos_en_stock') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_autos_en_stock;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.view_autopartes_en_stock') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.view_autopartes_en_stock;
 
 GO
+
+
 
 
 -- SCHEMA
@@ -245,7 +280,7 @@ GO
 CREATE TABLE EMPANADA_DE_MONDONGO.factura_auto(
 	nro_factura DECIMAL(18,0) PRIMARY KEY,
 	patente_auto NVARCHAR(50) NOT NULL,
-	precio_facturado DECIMAL(18,2) NOT NULL,
+	precio DECIMAL(18,2) NOT NULL,
 );
 GO
 
@@ -590,7 +625,7 @@ GO
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.migrar_factura_auto AS
 BEGIN
 	
-	INSERT INTO EMPANADA_DE_MONDONGO.factura_auto (nro_factura, patente_auto, precio_facturado)
+	INSERT INTO EMPANADA_DE_MONDONGO.factura_auto (nro_factura, patente_auto, precio)
 			SELECT DISTINCT factura_nro, auto_patente, precio_facturado FROM gd_esquema.Maestra WHERE factura_nro IS NOT NULL AND auto_patente IS NOT NULL;
 	
 END
@@ -641,6 +676,8 @@ GO
 
 CREATE INDEX ix_sucursal ON EMPANADA_DE_MONDONGO.sucursal (direccion);
 CREATE INDEX ix_cliente ON EMPANADA_DE_MONDONGO.cliente (dni, apellido);
+CREATE INDEX ix_compra_item ON EMPANADA_DE_MONDONGO.compra_item(codigo_autoparte)
+CREATE INDEX ix_factura_item ON EMPANADA_DE_MONDONGO.factura_item(codigo_autoparte)
 GO
 
 -- EJECUCION DE SPs
@@ -660,3 +697,108 @@ EXEC EMPANADA_DE_MONDONGO.migrar_compra_item;
 EXEC EMPANADA_DE_MONDONGO.migrar_factura;
 EXEC EMPANADA_DE_MONDONGO.migrar_factura_auto;
 EXEC EMPANADA_DE_MONDONGO.migrar_factura_item;
+GO
+
+-- VISTAS
+
+-- COMPRA AUTO
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_compra_auto AS 
+	SELECT c.nro_compra, ca.patente_auto, m.nombre as modelo, ca.precio, c.fecha, s.direccion as sucursal, cl.apellido + ', ' + cl.nombre as cliente, cl.dni, cl.mail
+	FROM EMPANADA_DE_MONDONGO.compra c
+	JOIN EMPANADA_DE_MONDONGO.compra_auto ca ON c.nro_compra = ca.nro_compra
+	JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = c.id_cliente
+	JOIN EMPANADA_DE_MONDONGO.auto a ON a.patente_auto = ca.patente_auto
+	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = a.modelo_codigo
+	JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = c.id_sucursal
+GO
+
+-- COMPRA ITEM
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_compra_items AS 
+	SELECT c.nro_compra, ci.nro_item, ap.descripcion as autoparte, m.nombre as modelo, ci.cantidad, ci.precio as total, c.fecha, s.direccion as sucursal, cl.apellido + ', ' + cl.nombre as cliente, cl.dni, cl.mail
+	FROM EMPANADA_DE_MONDONGO.compra c
+	JOIN EMPANADA_DE_MONDONGO.compra_item ci ON c.nro_compra = ci.nro_compra
+	JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = c.id_cliente
+	JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = c.id_sucursal
+	JOIN EMPANADA_DE_MONDONGO.autoparte ap ON ap.codigo_autoparte = ci.codigo_autoparte
+	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
+GO
+
+-- FACTURA AUTO
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_factura_auto AS 
+	SELECT f.nro_factura, fa.patente_auto, m.nombre as modelo, fa.precio, f.fecha, s.direccion as sucursal, cl.apellido + ', ' + cl.nombre as cliente, cl.dni, cl.mail
+	FROM EMPANADA_DE_MONDONGO.factura f
+	JOIN EMPANADA_DE_MONDONGO.factura_auto fa ON f.nro_factura = fa.nro_factura
+	JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
+	JOIN EMPANADA_DE_MONDONGO.auto a ON a.patente_auto = fa.patente_auto
+	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = a.modelo_codigo
+	JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = f.id_sucursal
+GO
+
+-- FACTURA ITEM
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_factura_items AS 
+	SELECT f.nro_factura, fi.nro_item, ap.descripcion as autoparte, m.nombre as modelo, fi.cantidad, fi.precio as total, f.fecha, s.direccion as sucursal, cl.apellido + ', ' +cl.nombre as cliente, cl.dni, cl.mail
+	FROM EMPANADA_DE_MONDONGO.factura f
+	JOIN EMPANADA_DE_MONDONGO.factura_item fi ON f.nro_factura = fi.nro_factura
+	JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
+	JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = f.id_sucursal
+	JOIN EMPANADA_DE_MONDONGO.autoparte ap ON ap.codigo_autoparte = fi.codigo_autoparte
+	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
+GO
+
+-- AUTO
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_auto AS 
+	SELECT f.nombre as fabricante, m.nombre as modelo, a.patente_auto, a.cant_kms, ta.descripcion as tipo_auto, a.fecha_alta, a.nro_chasis, a.nro_motor, tipo_motor_codigo as tipo_motor, m.potencia, tt.descripcion as tipo_transmision, tc.descripcion as tipo_caja
+	FROM EMPANADA_DE_MONDONGO.auto a
+	JOIN EMPANADA_DE_MONDONGO.tipo_auto ta ON ta.tipo_auto_codigo = a.tipo_auto_codigo
+	JOIN EMPANADA_DE_MONDONGO.tipo_transmision tt ON tt.tipo_transmision_codigo = a.tipo_transmision_codigo
+	JOIN EMPANADA_DE_MONDONGO.tipo_caja tc ON tc.tipo_caja_codigo = a.tipo_caja_codigo
+	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = a.modelo_codigo
+	JOIN EMPANADA_DE_MONDONGO.fabricante f ON f.id_fabricante = a.id_fabricante
+GO
+
+-- AUTOPARTE
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_autoparte AS
+	SELECT ap.codigo_autoparte, ap.descripcion, ap.categoria, f.nombre as fabricante, m.nombre as modelo
+	FROM EMPANADA_DE_MONDONGO.autoparte ap
+	JOIN EMPANADA_DE_MONDONGO.fabricante f ON f.id_fabricante = ap.id_fabricante
+	JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
+GO
+
+-- AUTOS EN STOCK
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_autos_en_stock AS 
+	SELECT *
+	FROM EMPANADA_DE_MONDONGO.view_auto a
+	WHERE a.patente_auto NOT IN (
+		SELECT fa.patente_auto
+		FROM EMPANADA_DE_MONDONGO.factura_auto fa
+	)
+GO
+
+-- FUNCION PARA CALCULAR EL STOCK DISPONIBLE SEGUN CODIGO AUTOPARTE
+
+CREATE FUNCTION EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE(@codigo_autoparte DECIMAL(18,0)) RETURNS DECIMAL(18,0) AS 
+BEGIN
+	DECLARE @cantidad_comprada DECIMAL(18,0);
+	DECLARE @cantidad_vendida DECIMAL(18,0);
+
+	SELECT @cantidad_comprada = SUM(ci.cantidad)FROM EMPANADA_DE_MONDONGO.compra_item ci WHERE ci.codigo_autoparte = @codigo_autoparte
+
+	SELECT @cantidad_vendida = SUM(fi.cantidad)FROM EMPANADA_DE_MONDONGO.factura_item fi WHERE fi.codigo_autoparte = @codigo_autoparte
+
+	RETURN @cantidad_comprada - @cantidad_vendida
+END
+GO
+
+-- AUTOPARTES EN STOCK
+
+CREATE VIEW EMPANADA_DE_MONDONGO.view_autopartes_en_stock AS 
+	SELECT ap.*, EMPANADA_DE_MONDONGO.STOCK_AUTOPARTE(ap.codigo_autoparte) as stock
+	FROM EMPANADA_DE_MONDONGO.view_autoparte ap
+GO
