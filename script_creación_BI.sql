@@ -591,6 +591,24 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes AS
+BEGIN
+
+	INSERT INTO EMPANADA_DE_MONDONGO.bi_venta_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
+		codigo_autoparte, categoria, cantidad_vendida, total_vendido)
+
+		SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac), 'N',
+				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), ap.id_fabricante, ap.codigo_autoparte, 'Desconocido', SUM(fi.cantidad), SUM(fi.precio)
+
+		FROM EMPANADA_DE_MONDONGO.factura f	JOIN EMPANADA_DE_MONDONGO.factura_item fi ON f.nro_factura= fi.nro_factura
+											JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
+											JOIN EMPANADA_DE_MONDONGO.autoparte ap ON ap.codigo_autoparte = fi.codigo_autoparte
+											JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
+		GROUP BY EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac),
+				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), ap.id_fabricante, ap.codigo_autoparte
+END
+GO
+
 ------ EJECUCION DE SP -------
 
 EXEC EMPANADA_DE_MONDONGO.bi_cargar_edad
@@ -601,3 +619,4 @@ GO
 
 EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo
 GO
+
