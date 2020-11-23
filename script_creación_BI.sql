@@ -158,7 +158,7 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_venta_autos(
 	id_sucursal DECIMAL(18),
 	modelo_codigo DECIMAL(18),
 	id_edad DECIMAL(18),
-	sexo CHAR(1) CHECK (sexo IN ('F', 'M', 'O')),
+	sexo CHAR(1) CHECK (sexo IN ('F', 'M', 'O', 'N')),
 	id_potencia DECIMAL(18),
 	id_fabricante DECIMAL(18),
 	tipo_auto_codigo DECIMAL(18),
@@ -167,7 +167,8 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_venta_autos(
 	tipo_motor DECIMAL(18),
 	cantidad_cambios DECIMAL(18),
 	cantidad_vendida DECIMAL(18),
-	total_vendido DECIMAL(18,2)
+	total_vendido DECIMAL(18,2),
+	tiempo_stock_promedio DECIMAL(18)
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
 	id_edad, sexo, id_potencia, id_fabricante, tipo_auto_codigo, 
 	tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios)
@@ -182,7 +183,7 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_compra_autopartes(
 	id_sucursal DECIMAL(18),
 	modelo_codigo DECIMAL(18),
 	id_edad DECIMAL(18),
-	sexo CHAR(1) CHECK (sexo IN ('F', 'M', 'O')),
+	sexo CHAR(1) CHECK (sexo IN ('F', 'M', 'O', 'N')),
 	id_potencia DECIMAL(18),
 	id_fabricante DECIMAL(18),
 	categoria VARCHAR(50) NULL,
@@ -201,13 +202,14 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_venta_autopartes(
 	id_sucursal DECIMAL(18),
 	modelo_codigo DECIMAL(18),
 	id_edad DECIMAL(18),
-	sexo CHAR(1) CHECK (sexo IN ('F', 'M', 'O')),
+	sexo CHAR(1) CHECK (sexo IN ('F', 'M', 'O', 'N')),
 	id_potencia DECIMAL(18),
 	id_fabricante DECIMAL(18),
 	categoria VARCHAR(50) NULL,
 	codigo_autoparte DECIMAL(18),
 	cantidad_vendida DECIMAL(18),
-	total_vendido DECIMAL(18,2)
+	total_vendido DECIMAL(18,2),
+	tiempo_stock_promedio DECIMAL(18)
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
 	id_edad, sexo, id_potencia, id_fabricante)
 
@@ -340,8 +342,7 @@ BEGIN
 END
 GO
 
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_edad
-GO
+
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_potencia AS
 BEGIN
@@ -352,8 +353,7 @@ BEGIN
 END
 GO
 
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_potencia
-GO
+
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_tiempo AS
 BEGIN
@@ -367,8 +367,7 @@ BEGIN
 END
 GO
 
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo
-GO
+
 ----- Cargar tablas de hecho  --------
 
 
@@ -427,13 +426,31 @@ END
 GO
 
 
+
+
+CREATE FUNCTION EMPANADA_DE_MONDONGO.DIAS_EN_STOCK(@patente_auto NVARCHAR(255)) RETURNS INT AS
+BEGIN
+	DECLARE @dias_en_stock INT
+
+	SELECT @dias_en_stock = DATEDIFF(DAY, c.fecha, f.fecha) 
+	FROM EMPANADA_DE_MONDONGO.compra c JOIN EMPANADA_DE_MONDONGO.compra_auto ca ON ca.nro_compra = c.nro_compra
+									   JOIN EMPANADA_DE_MONDONGO.factura_auto fa ON fa.patente_auto = ca.patente_auto
+									   JOIN EMPANADA_DE_MONDONGO.factura f ON f.nro_factura = fa.nro_factura
+	WHERE ca.patente_auto = @patente_auto
+
+	RETURN @dias_en_stock
+END
+GO
+
+
+
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_compra_autos AS
 BEGIN
 	INSERT INTO EMPANADA_DE_MONDONGO.bi_compra_autos  (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
 		tipo_auto_codigo, tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios, cantidad_comprada, total_comprado)
 		SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(c.fecha), c.id_sucursal, a.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac), 'N',
 				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), a.id_fabricante, a.tipo_auto_codigo, a.tipo_transmision_codigo, a.tipo_caja_codigo,
-				a.tipo_motor_codigo, 0, 'Desconocido', COUNT(DISTINCT c.nro_compra), SUM(ca.precio)
+				a.tipo_motor_codigo, 0, 'Desconocido', COUNT(DISTINCT ca.nro_compra), SUM(ca.precio)
 
 		FROM EMPANADA_DE_MONDONGO.compra c	JOIN EMPANADA_DE_MONDONGO.compra_auto ca ON c.nro_compra = ca.nro_compra
 											JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = c.id_cliente
@@ -444,4 +461,39 @@ BEGIN
 				a.tipo_motor_codigo
 
 END
+GO
+
+
+CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autos AS
+BEGIN
+	INSERT INTO EMPANADA_DE_MONDONGO.bi_venta_autos  (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
+		tipo_auto_codigo, tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios, cantidad_vendida, total_vendido, tiempo_stock_promedio)
+		SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, a.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac), 'N',
+				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), a.id_fabricante, a.tipo_auto_codigo, a.tipo_transmision_codigo, a.tipo_caja_codigo,
+				a.tipo_motor_codigo, 0, 'Desconocido', COUNT(DISTINCT f.nro_factura), SUM(fa.precio), SUM(EMPANADA_DE_MONDONGO.DIAS_EN_STOCK(fa.patente_auto)) / COUNT(DISTINCT f.nro_factura)
+
+		FROM EMPANADA_DE_MONDONGO.factura f JOIN EMPANADA_DE_MONDONGO.factura_auto fa ON f.nro_factura = fa.nro_factura
+											JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
+											JOIN EMPANADA_DE_MONDONGO.auto a ON a.patente_auto = fa.patente_auto
+											JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = a.modelo_codigo
+											JOIN EMPANADA_DE_MONDONGO.sucursal s ON s.id_sucursal = f.id_sucursal
+	
+		GROUP BY EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, a.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac),
+				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), a.id_fabricante, a.tipo_auto_codigo, a.tipo_transmision_codigo, a.tipo_caja_codigo,
+				a.tipo_motor_codigo
+
+END
+GO
+
+
+
+------ EJECUCION DE SP -------
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_edad
+GO
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_potencia
+GO
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo
 GO
