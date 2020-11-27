@@ -19,6 +19,9 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_venta_autopartes','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_stock_autopartes','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.bi_stock_autopartes;
 
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes','U') IS NOT NULL
+  DROP TABLE EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes;
+
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_modelo','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.bi_modelo;
 
@@ -60,6 +63,12 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo','U') IS NOT NULL
   IF OBJECT_ID('EMPANADA_DE_MONDONGO.RANGO_POTENCIA') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.RANGO_POTENCIA;
 
+  IF OBJECT_ID('EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTO') IS NOT NULL
+  DROP FUNCTION EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTO;
+
+  IF OBJECT_ID('EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTOPARTE') IS NOT NULL
+  DROP FUNCTION EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTOPARTE;
+
 
   -- Borrado de Stored Procedures
 
@@ -96,7 +105,21 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo','U') IS NOT NULL
  IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_compra_autos') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_compra_autos;
 
+ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_venta_autos') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autos;
 
+ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_compra_autopartes') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_compra_autopartes;
+
+ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes;
+
+ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes;
+  
 GO
 
 -- Usar check en la fact table de sexo.
@@ -235,7 +258,7 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_compra_autopartes(
 	cantidad_comprada DECIMAL(18),
 	total_comprado DECIMAL(18,2),
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
-	id_edad, sexo, id_potencia, id_fabricante, categoria)
+	id_edad, sexo, id_potencia, id_fabricante, categoria, codigo_autoparte)
 );
 GO
 
@@ -254,7 +277,7 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_venta_autopartes(
 	cantidad_vendida DECIMAL(18),
 	total_vendido DECIMAL(18,2)
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
-	id_edad, sexo, id_potencia, id_fabricante, categoria)
+	id_edad, sexo, id_potencia, id_fabricante, categoria, codigo_autoparte)
 
 );
 GO
@@ -270,7 +293,7 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_stock_autopartes(
 	codigo_autoparte DECIMAL(18),
 	stock DECIMAL(18),
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
-	id_potencia, id_fabricante, categoria)
+	id_potencia, id_fabricante, categoria, codigo_autoparte)
 );
 GO
 
@@ -496,6 +519,9 @@ BEGIN
 END
 GO
 
+
+DROP INDEX EMPANADA_DE_MONDONGO.compra_item.ix_ci_codigo_autoparte
+DROP INDEX EMPANADA_DE_MONDONGO.factura_item.ix_fi_codigo_autoparte
 CREATE INDEX ix_ci_codigo_autoparte ON EMPANADA_DE_MONDONGO.compra_item (codigo_autoparte);	
 CREATE INDEX ix_fi_codigo_autoparte ON EMPANADA_DE_MONDONGO.factura_item (codigo_autoparte);	
 GO
@@ -572,6 +598,49 @@ BEGIN
 											JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
 		GROUP BY EMPANADA_DE_MONDONGO.ID_TIEMPO(c.fecha), c.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac),
 				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), ap.id_fabricante, ap.codigo_autoparte
+		ORDER BY 1,2,3,4,5,6,7
+
+END
+GO
+
+CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes AS
+BEGIN
+
+	INSERT INTO EMPANADA_DE_MONDONGO.bi_venta_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
+		codigo_autoparte, categoria, cantidad_vendida, total_vendido)
+
+		SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac), 'N',
+				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), ap.id_fabricante, ap.codigo_autoparte, 'Desconocido', SUM(fi.cantidad), SUM(fi.precio)
+
+		FROM EMPANADA_DE_MONDONGO.factura f	JOIN EMPANADA_DE_MONDONGO.factura_item fi ON f.nro_factura= fi.nro_factura
+											JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
+											JOIN EMPANADA_DE_MONDONGO.autoparte ap ON ap.codigo_autoparte = fi.codigo_autoparte
+											JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
+		GROUP BY EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac),
+				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), ap.id_fabricante, ap.codigo_autoparte
+
+END
+GO
+
+CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes AS
+BEGIN
+	
+	INSERT INTO EMPANADA_DE_MONDONGO.bi_stock_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_potencia, id_fabricante,
+		codigo_autoparte, categoria, stock)
+			SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia),
+			ap.id_fabricante, ap.codigo_autoparte, 'Desconocido',
+			(
+				SELECT SUM(ca.cantidad_comprada) FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca WHERE EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha) = ca.id_tiempo
+				AND f.id_sucursal = ca.id_sucursal AND ap.modelo_codigo = ca.modelo_codigo AND EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac) = ca.id_edad
+				AND EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia) = ca.id_potencia AND ap.id_fabricante = ca.id_fabricante AND ap.codigo_autoparte = ca.codigo_autoparte
+				GROUP BY ca.id_tiempo, ca.id_sucursal, ca.modelo_codigo, ca.id_edad, ca.id_potencia, ca.id_fabricante, ca.codigo_autoparte
+			) AS stock
+
+			FROM EMPANADA_DE_MONDONGO.factura f JOIN EMPANADA_DE_MONDONGO.factura_item fi ON f.nro_factura = fi.nro_factura
+												JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
+												JOIN EMPANADA_DE_MONDONGO.autoparte ap ON ap.codigo_autoparte = fi.codigo_autoparte
+												JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
+			ORDER BY 1,2,3,4,5,6,7
 
 END
 GO
@@ -579,7 +648,7 @@ GO
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes AS
 BEGIN
 	
-	--INSERT INTO EMPANADA_DE_MONDONGO.bi_venta_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
+	--INSERT INTO EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
 		--codigo_autoparte, categoria, cantidad_vendida, total_vendido, tiempo_stock_promedio)
 	SELECT ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), ap.id_fabricante, ap.codigo_autoparte, 'Desconocido', EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTOPARTE(ap.codigo_autoparte)
 
@@ -591,13 +660,28 @@ BEGIN
 END
 GO
 
+
+
 ------ EJECUCION DE SP -------
 
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_autoparte
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_fabricante
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_modelo
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_sucursal
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_auto
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_caja
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_transmision
+
+
 EXEC EMPANADA_DE_MONDONGO.bi_cargar_edad
-GO
-
 EXEC EMPANADA_DE_MONDONGO.bi_cargar_potencia
-GO
-
 EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo
-GO
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_compra_autos
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_venta_autos
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_compra_autopartes
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes
+
