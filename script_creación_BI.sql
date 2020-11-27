@@ -624,24 +624,24 @@ GO
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes AS
 BEGIN
-	
-	INSERT INTO EMPANADA_DE_MONDONGO.bi_stock_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_potencia, id_fabricante,
-		codigo_autoparte, categoria, stock)
-			SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, ap.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia),
-			ap.id_fabricante, ap.codigo_autoparte, 'Desconocido',
-			(
-				SELECT SUM(ca.cantidad_comprada) FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca WHERE EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha) = ca.id_tiempo
-				AND f.id_sucursal = ca.id_sucursal AND ap.modelo_codigo = ca.modelo_codigo AND EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac) = ca.id_edad
-				AND EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia) = ca.id_potencia AND ap.id_fabricante = ca.id_fabricante AND ap.codigo_autoparte = ca.codigo_autoparte
-				GROUP BY ca.id_tiempo, ca.id_sucursal, ca.modelo_codigo, ca.id_edad, ca.id_potencia, ca.id_fabricante, ca.codigo_autoparte
-			) AS stock
+	-- Carga inicial a la tabla, el stock solo tiene los movimientos por mes
+	INSERT INTO EMPANADA_DE_MONDONGO.bi_stock_autopartes (id_tiempo, id_sucursal, modelo_codigo, id_potencia, id_fabricante, codigo_autoparte, categoria, stock)
+			SELECT COALESCE(ca.id_tiempo, va.id_tiempo), COALESCE(ca.id_sucursal, va.id_sucursal), COALESCE(ca.modelo_codigo, va.modelo_codigo), COALESCE(ca.id_potencia, va.id_potencia),
+			COALESCE(ca.id_fabricante,va.id_fabricante), COALESCE(ca.codigo_autoparte, va.codigo_autoparte), 'Desconocido',
+		    COALESCE(ca.cantidad_comprada, 0) - COALESCE(va.cantidad_vendida, 0) AS stock
 
-			FROM EMPANADA_DE_MONDONGO.factura f JOIN EMPANADA_DE_MONDONGO.factura_item fi ON f.nro_factura = fi.nro_factura
-												JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
-												JOIN EMPANADA_DE_MONDONGO.autoparte ap ON ap.codigo_autoparte = fi.codigo_autoparte
-												JOIN EMPANADA_DE_MONDONGO.modelo m ON m.modelo_codigo = ap.modelo_codigo
-			ORDER BY 1,2,3,4,5,6,7
-
+			FROM (SELECT ca.id_tiempo, ca.id_sucursal, ca.modelo_codigo, ca.id_potencia, ca.id_fabricante, ca.codigo_autoparte, SUM(ca.cantidad_comprada) AS cantidad_comprada
+					FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca 
+					GROUP BY ca.id_tiempo, ca.id_sucursal, ca.modelo_codigo, ca.id_potencia, ca.id_fabricante, ca.codigo_autoparte) ca
+					FULL OUTER JOIN (SELECT va.id_tiempo, va.id_sucursal, va.modelo_codigo, va.id_potencia, va.id_fabricante, va.codigo_autoparte, SUM(va.cantidad_vendida) AS cantidad_vendida
+										FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va 
+										GROUP BY va.id_tiempo, va.id_sucursal, va.modelo_codigo, va.id_potencia, va.id_fabricante, va.codigo_autoparte) va
+						ON va.codigo_autoparte = ca.codigo_autoparte AND va.id_fabricante = ca.id_fabricante AND va.id_potencia = ca.id_potencia 
+							AND va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo AND  va.modelo_codigo = ca.modelo_codigo
+	-- Actualizacion con stocks acumulados
+	UPDATE sa SET stock = stock + (SELECT COALESCE(SUM(stock), 0) FROM EMPANADA_DE_MONDONGO.bi_stock_autopartes
+									WHERE codigo_autoparte = sa.codigo_autoparte AND id_sucursal = sa.id_sucursal AND id_tiempo < sa.id_tiempo) 
+			FROM EMPANADA_DE_MONDONGO.bi_stock_autopartes AS sa
 END
 GO
 
