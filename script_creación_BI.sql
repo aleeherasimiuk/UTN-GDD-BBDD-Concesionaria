@@ -747,6 +747,53 @@ CREATE VIEW v_ganancias_x_sucursal_mes_autos AS
 GO
 	-- Promedio de tiempo en stock de cada modelo de automóvil.
 CREATE VIEW v_tiempo_promedio_stock_autos AS
-	SELECT va.modelo_codigo, m.nombre, CONVERT(DECIMAL(10), AVG(tiempo_stock_promedio)) as tiempo_promedio_dias
+	SELECT va.modelo_codigo, m.nombre, CONVERT(DECIMAL(10), AVG(tiempo_stock_promedio)) AS tiempo_promedio_en_dias
 		FROM EMPANADA_DE_MONDONGO.bi_venta_autos va JOIN EMPANADA_DE_MONDONGO.bi_modelo m ON m.modelo_codigo = va.modelo_codigo
 		GROUP BY va.modelo_codigo, m.nombre
+GO
+-- Vistas autopartes
+	-- Precio promedio de cada autoparte, vendida y comprada
+CREATE VIEW v_promedios_compra_venta_autopartes AS
+	SELECT c.codigo_autoparte, c.precio_promedio_compra, v.precio_promedio_venta
+	FROM (
+			SELECT ca.codigo_autoparte, CONVERT(DECIMAL(18,2), COALESCE(SUM(ca.total_comprado) / SUM(ca.cantidad_comprada), 0)) as precio_promedio_compra
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca
+			GROUP BY ca.codigo_autoparte
+		) c
+	JOIN
+		(
+			SELECT va.codigo_autoparte, CONVERT(DECIMAL(18,2), COALESCE(SUM(va.total_vendido) / SUM(va.cantidad_vendida), 0)) as precio_promedio_venta
+			FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va
+			GROUP BY va.codigo_autoparte
+		) v ON c.codigo_autoparte = v.codigo_autoparte
+GO
+
+-- Ganancias x sucursal x mes
+CREATE VIEW v_ganancias_x_sucursal_mes_autopartess AS
+	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal,  COALESCE(va.total_vendido, 0) - COALESCE(ca.total_comprado, 0) AS ganancia
+		FROM (
+			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.total_comprado) AS total_comprado
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca
+				GROUP BY ca.id_sucursal, ca.id_tiempo
+		) ca FULL OUTER JOIN (
+				SELECT va.id_tiempo, va.id_sucursal, SUM(va.total_vendido) AS total_vendido
+				FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va
+				GROUP BY va.id_sucursal, va.id_tiempo
+			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
+			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
+GO
+
+	-- Promedio de tiempo en stock de cada autoparte.
+CREATE VIEW v_tiempo_promedio_stock_autopartes AS
+	SELECT ta.codigo_autoparte, tiempo_stock AS tiempo_promedio_en_dias
+		FROM EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes ta
+GO
+
+	-- Promedio de tiempo en stock de cada autoparte.
+CREATE VIEW v_maxima_cant_stock_x_sucursal AS
+	SELECT sa.id_sucursal, t.agno, sa.codigo_autoparte, MAX(sa.stock) AS maxima_cantidad
+	FROM EMPANADA_DE_MONDONGO.bi_stock_autopartes sa JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON t.id_tiempo = sa.id_tiempo
+	GROUP BY sa.id_sucursal, t.agno, sa.codigo_autoparte
+GO
+
+
