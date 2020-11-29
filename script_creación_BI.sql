@@ -754,9 +754,6 @@ CREATE VIEW EMPANADA_DE_MONDONGO.v_maxima_cant_stock_x_sucursal AS
 	GROUP BY sa.id_sucursal, t.agno, sa.codigo_autoparte
 GO
 
-
-
-
 /* 
 
 
