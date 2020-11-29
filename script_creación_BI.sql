@@ -19,9 +19,6 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_venta_autopartes','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_stock_autopartes','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.bi_stock_autopartes;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes','U') IS NOT NULL
-  DROP TABLE EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes;
-
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_modelo','U') IS NOT NULL
   DROP TABLE EMPANADA_DE_MONDONGO.bi_modelo;
 
@@ -65,10 +62,6 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo','U') IS NOT NULL
 
   IF OBJECT_ID('EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTO') IS NOT NULL
   DROP FUNCTION EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTO;
-
-  IF OBJECT_ID('EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTOPARTE') IS NOT NULL
-  DROP FUNCTION EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTOPARTE;
-
 
   -- Borrado de Stored Procedures
 
@@ -117,9 +110,6 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo','U') IS NOT NULL
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes') IS NOT NULL
   DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes;
 
- IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes') IS NOT NULL
-  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes;
- 
 
 -- Vistas
 
@@ -141,13 +131,23 @@ IF OBJECT_ID('EMPANADA_DE_MONDONGO.v_promedios_compra_venta_autopartes') IS NOT 
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.v_ganancias_x_sucursal_mes_autopartes') IS NOT NULL
   DROP VIEW EMPANADA_DE_MONDONGO.v_ganancias_x_sucursal_mes_autopartes;
 
-IF OBJECT_ID('EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autopartes') IS NOT NULL
-  DROP VIEW EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autopartes;
-
 IF OBJECT_ID('EMPANADA_DE_MONDONGO.v_maxima_cant_stock_x_sucursal') IS NOT NULL
   DROP VIEW EMPANADA_DE_MONDONGO.v_maxima_cant_stock_x_sucursal;
 
 GO
+
+-- Indices
+IF INDEXPROPERTY(OBJECT_ID('EMPANADA_DE_MONDONGO.compra_item'), 'ix_ci_codigo_autoparte', 'IndexID') IS NOT NULL
+  DROP INDEX EMPANADA_DE_MONDONGO.compra_item.ix_ci_codigo_autoparte;
+
+IF INDEXPROPERTY(OBJECT_ID('EMPANADA_DE_MONDONGO.factura_item'), 'ix_fi_codigo_autoparte', 'IndexID') IS NOT NULL
+  DROP INDEX EMPANADA_DE_MONDONGO.factura_item.ix_fi_codigo_autoparte;
+
+IF INDEXPROPERTY(OBJECT_ID('EMPANADA_DE_MONDONGO.compra_auto'), 'ix_ca_patente_auto', 'IndexID') IS NOT NULL
+  DROP INDEX EMPANADA_DE_MONDONGO.compra_auto.ix_ca_patente_auto;
+
+IF INDEXPROPERTY(OBJECT_ID('EMPANADA_DE_MONDONGO.factura_auto'), 'ix_fa_patente_auto', 'IndexID') IS NOT NULL
+  DROP INDEX EMPANADA_DE_MONDONGO.factura_auto.ix_fa_patente_auto;
 
 -- Usar check en la fact table de sexo.
 
@@ -236,12 +236,11 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_compra_autos(
 	tipo_transmision_codigo DECIMAL(18),
 	tipo_caja_codigo DECIMAL(18),
 	tipo_motor DECIMAL(18),
-	cantidad_cambios DECIMAL(18),
 	cantidad_comprada DECIMAL(18),
 	total_comprado DECIMAL(18,2),
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
 	id_edad, sexo, id_potencia, id_fabricante, tipo_auto_codigo, 
-	tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios)
+	tipo_transmision_codigo, tipo_caja_codigo, tipo_motor)
 
 );
 GO
@@ -260,13 +259,12 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_venta_autos(
 	tipo_transmision_codigo DECIMAL(18),
 	tipo_caja_codigo DECIMAL(18),
 	tipo_motor DECIMAL(18),
-	cantidad_cambios DECIMAL(18),
 	cantidad_vendida DECIMAL(18),
 	total_vendido DECIMAL(18,2),
 	tiempo_stock_promedio DECIMAL(18)
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
 	id_edad, sexo, id_potencia, id_fabricante, tipo_auto_codigo, 
-	tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios)
+	tipo_transmision_codigo, tipo_caja_codigo, tipo_motor)
 );
 GO
 
@@ -321,18 +319,6 @@ CREATE TABLE EMPANADA_DE_MONDONGO.bi_stock_autopartes(
 	stock DECIMAL(18),
 	PRIMARY KEY (id_tiempo, id_sucursal, modelo_codigo, 
 	id_potencia, id_fabricante, categoria, codigo_autoparte)
-);
-GO
-
-CREATE TABLE EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes(
-
-	modelo_codigo DECIMAL(18),
-	id_potencia DECIMAL(18),
-	id_fabricante DECIMAL(18),
-	categoria VARCHAR(50),
-	codigo_autoparte DECIMAL(18),
-	tiempo_stock DECIMAL(18),
-	PRIMARY KEY (modelo_codigo,	id_potencia, id_fabricante, categoria, codigo_autoparte)
 );
 GO
 
@@ -547,41 +533,20 @@ END
 GO
 
 
-DROP INDEX EMPANADA_DE_MONDONGO.compra_item.ix_ci_codigo_autoparte
-DROP INDEX EMPANADA_DE_MONDONGO.factura_item.ix_fi_codigo_autoparte
 CREATE INDEX ix_ci_codigo_autoparte ON EMPANADA_DE_MONDONGO.compra_item (codigo_autoparte);	
 CREATE INDEX ix_fi_codigo_autoparte ON EMPANADA_DE_MONDONGO.factura_item (codigo_autoparte);	
-GO
-
-DROP INDEX EMPANADA_DE_MONDONGO.compra_auto.ix_ca_patente_auto
-DROP INDEX EMPANADA_DE_MONDONGO.factura_auto.ix_fa_patente_auto
 CREATE INDEX ix_ca_patente_auto ON EMPANADA_DE_MONDONGO.compra_auto (patente_auto);	
 CREATE INDEX ix_fa_patente_auto ON EMPANADA_DE_MONDONGO.factura_auto (patente_auto);	
 GO
 
-CREATE FUNCTION EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTOPARTE(@codigo_autoparte DECIMAL(18)) RETURNS INT AS
-BEGIN
-	DECLARE @dias_en_stock INT
-
-	SELECT @dias_en_stock = (((DATEDIFF(DAY, '2000-01-01', MIN(f.fecha)) + DATEDIFF(DAY, '2000-01-01', MAX(f.fecha))) / 2)
-				-
-			((DATEDIFF(DAY, '2000-01-01', MIN(c.fecha)) + DATEDIFF(DAY, '2000-01-01', MAX(c.fecha))) / 2))
-	FROM EMPANADA_DE_MONDONGO.compra c JOIN EMPANADA_DE_MONDONGO.compra_item ci ON ci.nro_compra = c.nro_compra
-									   JOIN EMPANADA_DE_MONDONGO.factura_item fi ON fi.codigo_autoparte = ci.codigo_autoparte
-									   JOIN EMPANADA_DE_MONDONGO.factura f ON f.nro_factura = fi.nro_factura
-	WHERE ci.codigo_autoparte = @codigo_autoparte
-
-	RETURN @dias_en_stock
-END
-GO
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_compra_autos AS
 BEGIN
 	INSERT INTO EMPANADA_DE_MONDONGO.bi_compra_autos  (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
-		tipo_auto_codigo, tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios, cantidad_comprada, total_comprado)
+		tipo_auto_codigo, tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_comprada, total_comprado)
 		SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(c.fecha), c.id_sucursal, a.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac), 'N',
 				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), a.id_fabricante, a.tipo_auto_codigo, a.tipo_transmision_codigo, a.tipo_caja_codigo,
-				a.tipo_motor_codigo, 0, COUNT(DISTINCT ca.nro_compra), SUM(ca.precio)
+				a.tipo_motor_codigo, COUNT(DISTINCT ca.nro_compra), SUM(ca.precio)
 
 		FROM EMPANADA_DE_MONDONGO.compra c	JOIN EMPANADA_DE_MONDONGO.compra_auto ca ON c.nro_compra = ca.nro_compra
 											JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = c.id_cliente
@@ -598,10 +563,10 @@ GO
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autos AS
 BEGIN
 	INSERT INTO EMPANADA_DE_MONDONGO.bi_venta_autos  (id_tiempo, id_sucursal, modelo_codigo, id_edad, sexo, id_potencia, id_fabricante,
-		tipo_auto_codigo, tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_cambios, cantidad_vendida, total_vendido, tiempo_stock_promedio)
+		tipo_auto_codigo, tipo_transmision_codigo, tipo_caja_codigo, tipo_motor, cantidad_vendida, total_vendido, tiempo_stock_promedio)
 		SELECT EMPANADA_DE_MONDONGO.ID_TIEMPO(f.fecha), f.id_sucursal, a.modelo_codigo, EMPANADA_DE_MONDONGO.RANGO_EDAD(cl.fecha_nac), 'N',
 				EMPANADA_DE_MONDONGO.RANGO_POTENCIA(m.potencia), a.id_fabricante, a.tipo_auto_codigo, a.tipo_transmision_codigo, a.tipo_caja_codigo,
-				a.tipo_motor_codigo, 0, COUNT(DISTINCT f.nro_factura), SUM(fa.precio), SUM(EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTO(fa.patente_auto)) / COUNT(DISTINCT f.nro_factura)
+				a.tipo_motor_codigo, COUNT(DISTINCT f.nro_factura), SUM(fa.precio), SUM(EMPANADA_DE_MONDONGO.DIAS_EN_STOCK_AUTO(fa.patente_auto)) / COUNT(DISTINCT f.nro_factura)
 
 		FROM EMPANADA_DE_MONDONGO.factura f JOIN EMPANADA_DE_MONDONGO.factura_auto fa ON f.nro_factura = fa.nro_factura
 											JOIN EMPANADA_DE_MONDONGO.cliente cl ON cl.id_cliente = f.id_cliente
@@ -678,6 +643,145 @@ BEGIN
 			FROM EMPANADA_DE_MONDONGO.bi_stock_autopartes AS sa
 END
 GO
+
+------ EJECUCION DE SP -------
+
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_autoparte
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_fabricante
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_modelo
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_sucursal
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_auto
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_caja
+EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_transmision
+
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_edad
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_potencia
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_compra_autos
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_venta_autos
+
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_compra_autopartes
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes
+EXEC EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes
+GO
+
+-- Vistas automoviles
+
+	--Cantidad de automóviles, vendidos y comprados x sucursal y mes
+CREATE VIEW EMPANADA_DE_MONDONGO.v_mov_autos_x_sucursal_y_mes_autos AS
+	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal, COALESCE(ca.cantidad_comprada, 0) AS cantidad_comprada, COALESCE(va.cantidad_vendida, 0) AS cantidad_vendida
+		FROM (
+			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.cantidad_comprada) AS cantidad_comprada
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autos ca
+				GROUP BY ca.id_sucursal, ca.id_tiempo
+		) ca FULL OUTER JOIN (
+				SELECT va.id_tiempo, va.id_sucursal, SUM(va.cantidad_vendida) AS cantidad_vendida
+				FROM EMPANADA_DE_MONDONGO.bi_venta_autos va
+				GROUP BY va.id_sucursal, va.id_tiempo
+			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
+			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
+GO
+	-- Precio promedio de automóviles, vendidos y comprados.
+CREATE VIEW EMPANADA_DE_MONDONGO.v_promedios_compra_venta_autos AS
+	SELECT (
+			SELECT SUM(ca.total_comprado) / SUM(ca.cantidad_comprada)
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autos ca
+		) precio_promedio_compra,
+		(
+			SELECT SUM(va.total_vendido) / SUM(va.cantidad_vendida)
+				FROM EMPANADA_DE_MONDONGO.bi_venta_autos va
+		) precio_promedio_venta
+GO
+
+	-- Ganancias x sucursal x mes
+CREATE VIEW EMPANADA_DE_MONDONGO.v_ganancias_x_sucursal_mes_autos AS
+	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal,  COALESCE(va.total_vendido, 0) - COALESCE(ca.total_comprado, 0) AS ganancia
+		FROM (
+			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.total_comprado) AS total_comprado
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autos ca
+				GROUP BY ca.id_sucursal, ca.id_tiempo
+		) ca FULL OUTER JOIN (
+				SELECT va.id_tiempo, va.id_sucursal, SUM(va.total_vendido) AS total_vendido
+				FROM EMPANADA_DE_MONDONGO.bi_venta_autos va
+				GROUP BY va.id_sucursal, va.id_tiempo
+			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
+			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
+GO
+	-- Promedio de tiempo en stock de cada modelo de automóvil.
+CREATE VIEW EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autos AS
+	SELECT va.modelo_codigo, m.nombre, CONVERT(DECIMAL(10), AVG(tiempo_stock_promedio)) AS tiempo_promedio_en_dias
+		FROM EMPANADA_DE_MONDONGO.bi_venta_autos va JOIN EMPANADA_DE_MONDONGO.bi_modelo m ON m.modelo_codigo = va.modelo_codigo
+		GROUP BY va.modelo_codigo, m.nombre
+GO
+-- Vistas autopartes
+	-- Precio promedio de cada autoparte, vendida y comprada
+CREATE VIEW EMPANADA_DE_MONDONGO.v_promedios_compra_venta_autopartes AS
+	SELECT c.codigo_autoparte, c.precio_promedio_compra, v.precio_promedio_venta
+	FROM (
+			SELECT ca.codigo_autoparte, CONVERT(DECIMAL(18,2), COALESCE(SUM(ca.total_comprado) / SUM(ca.cantidad_comprada), 0)) as precio_promedio_compra
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca
+			GROUP BY ca.codigo_autoparte
+		) c
+	JOIN
+		(
+			SELECT va.codigo_autoparte, CONVERT(DECIMAL(18,2), COALESCE(SUM(va.total_vendido) / SUM(va.cantidad_vendida), 0)) as precio_promedio_venta
+			FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va
+			GROUP BY va.codigo_autoparte
+		) v ON c.codigo_autoparte = v.codigo_autoparte
+GO
+
+-- Ganancias x sucursal x mes
+CREATE VIEW EMPANADA_DE_MONDONGO.v_ganancias_x_sucursal_mes_autopartes AS
+	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal,  COALESCE(va.total_vendido, 0) - COALESCE(ca.total_comprado, 0) AS ganancia
+		FROM (
+			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.total_comprado) AS total_comprado
+				FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca
+				GROUP BY ca.id_sucursal, ca.id_tiempo
+		) ca FULL OUTER JOIN (
+				SELECT va.id_tiempo, va.id_sucursal, SUM(va.total_vendido) AS total_vendido
+				FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va
+				GROUP BY va.id_sucursal, va.id_tiempo
+			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
+			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
+GO
+
+	-- Promedio de tiempo en stock de cada autoparte.
+CREATE VIEW EMPANADA_DE_MONDONGO.v_maxima_cant_stock_x_sucursal AS
+	SELECT sa.id_sucursal, t.agno, sa.codigo_autoparte, MAX(sa.stock) AS maxima_cantidad
+	FROM EMPANADA_DE_MONDONGO.bi_stock_autopartes sa JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON t.id_tiempo = sa.id_tiempo
+	GROUP BY sa.id_sucursal, t.agno, sa.codigo_autoparte
+GO
+
+
+
+
+/* 
+
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes','U') IS NOT NULL
+  DROP TABLE EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes;y
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autopartes') IS NOT NULL
+  DROP VIEW EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autopartes;
+
+IF OBJECT_ID('EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes') IS NOT NULL
+  DROP PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes;
+
+
+CREATE TABLE EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes(
+
+	modelo_codigo DECIMAL(18),
+	id_potencia DECIMAL(18),
+	id_fabricante DECIMAL(18),
+	categoria VARCHAR(50),
+	codigo_autoparte DECIMAL(18),
+	tiempo_stock DECIMAL(18),
+	PRIMARY KEY (modelo_codigo,	id_potencia, id_fabricante, categoria, codigo_autoparte)
+);
+GO
+
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes AS
 BEGIN
@@ -784,121 +888,13 @@ BEGIN
 END
 GO
 
------- EJECUCION DE SP -------
 
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_autoparte
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_fabricante
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_modelo
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_sucursal
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_auto
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_caja
-EXEC EMPANADA_DE_MONDONGO.bi_migrar_tipo_transmision
-
-
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_edad
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_potencia
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo
-
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_compra_autos
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_venta_autos
-
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_compra_autopartes
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_venta_autopartes
-EXEC EMPANADA_DE_MONDONGO.bi_cargar_stock_autopartes
 --EXEC EMPANADA_DE_MONDONGO.bi_cargar_tiempo_stock_autopartes
-GO
 
--- Vistas automoviles
-
-	--Cantidad de automóviles, vendidos y comprados x sucursal y mes
-CREATE VIEW EMPANADA_DE_MONDONGO.v_mov_autos_x_sucursal_y_mes_autos AS
-	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal, COALESCE(ca.cantidad_comprada, 0) AS cantidad_comprada, COALESCE(va.cantidad_vendida, 0) AS cantidad_vendida
-		FROM (
-			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.cantidad_comprada) AS cantidad_comprada
-				FROM EMPANADA_DE_MONDONGO.bi_compra_autos ca
-				GROUP BY ca.id_sucursal, ca.id_tiempo
-		) ca FULL OUTER JOIN (
-				SELECT va.id_tiempo, va.id_sucursal, SUM(va.cantidad_vendida) AS cantidad_vendida
-				FROM EMPANADA_DE_MONDONGO.bi_venta_autos va
-				GROUP BY va.id_sucursal, va.id_tiempo
-			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
-			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
-GO
-	-- Precio promedio de automóviles, vendidos y comprados.
-CREATE VIEW EMPANADA_DE_MONDONGO.v_promedios_compra_venta_autos AS
-	SELECT (
-			SELECT SUM(ca.total_comprado) / SUM(ca.cantidad_comprada)
-				FROM EMPANADA_DE_MONDONGO.bi_compra_autos ca
-		) precio_promedio_compra,
-		(
-			SELECT SUM(va.total_vendido) / SUM(va.cantidad_vendida)
-				FROM EMPANADA_DE_MONDONGO.bi_venta_autos va
-		) precio_promedio_venta
-GO
-
-	-- Ganancias x sucursal x mes
-CREATE VIEW EMPANADA_DE_MONDONGO.v_ganancias_x_sucursal_mes_autos AS
-	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal,  COALESCE(va.total_vendido, 0) - COALESCE(ca.total_comprado, 0) AS ganancia
-		FROM (
-			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.total_comprado) AS total_comprado
-				FROM EMPANADA_DE_MONDONGO.bi_compra_autos ca
-				GROUP BY ca.id_sucursal, ca.id_tiempo
-		) ca FULL OUTER JOIN (
-				SELECT va.id_tiempo, va.id_sucursal, SUM(va.total_vendido) AS total_vendido
-				FROM EMPANADA_DE_MONDONGO.bi_venta_autos va
-				GROUP BY va.id_sucursal, va.id_tiempo
-			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
-			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
-GO
-	-- Promedio de tiempo en stock de cada modelo de automóvil.
-CREATE VIEW EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autos AS
-	SELECT va.modelo_codigo, m.nombre, CONVERT(DECIMAL(10), AVG(tiempo_stock_promedio)) AS tiempo_promedio_en_dias
-		FROM EMPANADA_DE_MONDONGO.bi_venta_autos va JOIN EMPANADA_DE_MONDONGO.bi_modelo m ON m.modelo_codigo = va.modelo_codigo
-		GROUP BY va.modelo_codigo, m.nombre
-GO
--- Vistas autopartes
-	-- Precio promedio de cada autoparte, vendida y comprada
-CREATE VIEW EMPANADA_DE_MONDONGO.v_promedios_compra_venta_autopartes AS
-	SELECT c.codigo_autoparte, c.precio_promedio_compra, v.precio_promedio_venta
-	FROM (
-			SELECT ca.codigo_autoparte, CONVERT(DECIMAL(18,2), COALESCE(SUM(ca.total_comprado) / SUM(ca.cantidad_comprada), 0)) as precio_promedio_compra
-				FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca
-			GROUP BY ca.codigo_autoparte
-		) c
-	JOIN
-		(
-			SELECT va.codigo_autoparte, CONVERT(DECIMAL(18,2), COALESCE(SUM(va.total_vendido) / SUM(va.cantidad_vendida), 0)) as precio_promedio_venta
-			FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va
-			GROUP BY va.codigo_autoparte
-		) v ON c.codigo_autoparte = v.codigo_autoparte
-GO
-
--- Ganancias x sucursal x mes
-CREATE VIEW EMPANADA_DE_MONDONGO.v_ganancias_x_sucursal_mes_autopartes AS
-	SELECT t.mes, t.agno, COALESCE(ca.id_sucursal, va.id_sucursal) AS id_sucursal,  COALESCE(va.total_vendido, 0) - COALESCE(ca.total_comprado, 0) AS ganancia
-		FROM (
-			SELECT ca.id_tiempo, ca.id_sucursal, SUM(ca.total_comprado) AS total_comprado
-				FROM EMPANADA_DE_MONDONGO.bi_compra_autopartes ca
-				GROUP BY ca.id_sucursal, ca.id_tiempo
-		) ca FULL OUTER JOIN (
-				SELECT va.id_tiempo, va.id_sucursal, SUM(va.total_vendido) AS total_vendido
-				FROM EMPANADA_DE_MONDONGO.bi_venta_autopartes va
-				GROUP BY va.id_sucursal, va.id_tiempo
-			) va ON va.id_sucursal = ca.id_sucursal AND va.id_tiempo = ca.id_tiempo
-			JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON (t.id_tiempo IN (ca.id_tiempo, va.id_tiempo))
-GO
 
 	-- Promedio de tiempo en stock de cada autoparte.
 CREATE VIEW EMPANADA_DE_MONDONGO.v_tiempo_promedio_stock_autopartes AS
 	SELECT ta.codigo_autoparte, tiempo_stock AS tiempo_promedio_en_dias
 		FROM EMPANADA_DE_MONDONGO.bi_tiempo_stock_autopartes ta
 GO
-
-	-- Promedio de tiempo en stock de cada autoparte.
-CREATE VIEW EMPANADA_DE_MONDONGO.v_maxima_cant_stock_x_sucursal AS
-	SELECT sa.id_sucursal, t.agno, sa.codigo_autoparte, MAX(sa.stock) AS maxima_cantidad
-	FROM EMPANADA_DE_MONDONGO.bi_stock_autopartes sa JOIN EMPANADA_DE_MONDONGO.bi_tiempo t ON t.id_tiempo = sa.id_tiempo
-	GROUP BY sa.id_sucursal, t.agno, sa.codigo_autoparte
-GO
-
-
+*/
