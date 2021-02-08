@@ -9,6 +9,8 @@ El Trabajo Práctico consiste en:
 - Migrar al nuevo modelo de datos transaccional.
 - Realizar un modelo de Inteligencia de Negocios.
 - Migrar hacia el nuevo modelo de Inteligencia de Negocios.
+- Utilizando Microsoft SQL Server 2012
+- Realizando el Diagrama de Entidad - Relación de cada modelo de datos.
 
 
 ## Modelo Transaccional
