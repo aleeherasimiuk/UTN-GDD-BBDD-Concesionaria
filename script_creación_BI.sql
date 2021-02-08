@@ -520,18 +520,17 @@ BEGIN
 	SET @EDAD = (DATEDIFF(DAY, @FECHA_NACIMIENTO, @HOY) / 365)
 
 	IF @EDAD BETWEEN 18 AND 30
-		SELECT @id_edad = id_edad FROM EMPANADA_DE_MONDONGO.bi_edad WHERE rango = '18 - 30 aÃ±os'
+		SELECT @id_edad = id_edad FROM EMPANADA_DE_MONDONGO.bi_edad WHERE rango = '18 - 30 años'
 	ELSE IF @EDAD BETWEEN 31 AND 50
-		SELECT @id_edad = id_edad FROM EMPANADA_DE_MONDONGO.bi_edad WHERE rango = '31 - 50 aÃ±os'
+		SELECT @id_edad = id_edad FROM EMPANADA_DE_MONDONGO.bi_edad WHERE rango = '31 - 50 años'
 	ELSE
-		SELECT @id_edad = id_edad FROM EMPANADA_DE_MONDONGO.bi_edad WHERE rango = '> 50 aÃ±os'
+		SELECT @id_edad = id_edad FROM EMPANADA_DE_MONDONGO.bi_edad WHERE rango = '> 50 años'
 
 
 	RETURN @id_edad;
 
 END
 GO
-
 -- Devuelve el rango de potencia según descripción.
 CREATE FUNCTION EMPANADA_DE_MONDONGO.RANGO_POTENCIA(@POTENCIA DECIMAL(18)) RETURNS DECIMAL(18) AS
 BEGIN
@@ -605,7 +604,6 @@ BEGIN
 
 END
 GO
-
 
 CREATE PROCEDURE EMPANADA_DE_MONDONGO.bi_cargar_venta_autos AS
 BEGIN
